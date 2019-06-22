@@ -107,6 +107,13 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
                         recipe=recipe.rec_name,
                         rcp=rcp.rec_name))
 
+    def get_rec_name(self, name):
+        return self.product.rec_name
+
+    @classmethod
+    def search_rec_name(cls, name, clause):
+        return [('product.rec_name', clause[1], clause[2])]
+
 
 class RecipePrice(ModelSQL, CompanyValueMixin):
     "Recipe Price"

@@ -41,7 +41,7 @@ class DishRecipeTestCase(ModuleTestCase):
             product=product_1
         )
         recipe.save()
-        self.assertEqual('product_1', recipe.product.name)
+        self.assertEqual(recipe.rec_name, recipe.product.rec_name)
 
         # Do not allow to use a product that already belongs to a recipe
         self.assertRaises(Exception, Recipe.create, [{
