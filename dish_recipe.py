@@ -6,6 +6,7 @@ from trytond.transaction import Transaction
 from trytond.pyson import Bool, Eval, If
 from trytond.modules.company.model import (
     CompanyMultiValueMixin, CompanyValueMixin)
+from trytond.exceptions import UserError
 from trytond.modules.product import price_digits
 from decimal import Decimal
 
@@ -23,10 +24,15 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
 
     product = fields.Many2One('product.product', 'Product',
         required=True,
-        domain=[('type', '=', 'service')],
+        domain=[
+            ('type', '=', 'service'),
+            ('template.default_uom', '=', Eval('unit')),
+        ],
         states={
             'readonly': Bool(Eval('components')),
-        }, depends=['components'])
+        }, depends=['components', 'unit'])
+    unit = fields.Function(fields.Many2One('product.uom', 'Unit'),
+        'get_unit')
     components = fields.One2Many('dish_recipe.recipe.component',
         'recipe', 'Components',
         domain=[
@@ -54,19 +60,30 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
             return pool.get('dish_recipe.price')
         return super(Recipe, cls).multivalue_model(field)
 
+    def get_unit(self, name=None):
+        pool = Pool()
+        ModelData = pool.get('ir.model.data')
+        uom_id = ModelData.get_id('product', 'uom_unit')
+        return uom_id
+
     def get_cost(self, name=None):
         Uom = Pool().get('product.uom')
         if not self.components:
             return
         result = Decimal('0.0')
         for component in self.components:
-            if not component.product.cost_price:
-                continue
-            quantity = Uom.compute_qty(
-                component.unit,
-                component.quantity,
-                component.product.default_uom)
-            result += Decimal(quantity) * component.product.cost_price
+            if component.product.recipe:
+                if not component.product.recipe[0].cost:
+                    continue
+                result += component.product.recipe[0].cost
+            else:
+                if not component.product.cost_price:
+                    continue
+                quantity = Uom.compute_qty(
+                    component.unit,
+                    component.quantity,
+                    component.product.default_uom)
+                result += Decimal(quantity) * component.product.cost_price
         return result
 
     def get_percentage(self, name=None):
@@ -74,6 +91,21 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
             return
         result = self.cost / self.price * Decimal('100.0')
         return result
+
+    @classmethod
+    def validate(cls, recipes):
+        Rcp = Pool().get('dish_recipe.recipe')
+        for recipe in recipes:
+            rcp = Rcp.search([
+                    ('product', '=', recipe.product.id),
+                    ('id', '!=', recipe.id),
+                ])
+            if rcp:
+                raise UserError(
+                    gettext('dish_recipe.msg_product_selected',
+                        product=product.rec_name,
+                        recipe=recipe.rec_name,
+                        rcp=rcp.rec_name))
 
 
 class RecipePrice(ModelSQL, CompanyValueMixin):
@@ -85,7 +117,7 @@ class RecipePrice(ModelSQL, CompanyValueMixin):
 
 
 class RecipeComponent(ModelSQL, ModelView):
-    'Purchase Line'
+    'Recipe Component'
     __name__ = 'dish_recipe.recipe.component'
 
     recipe = fields.Many2One('dish_recipe.recipe', 'Recipe',

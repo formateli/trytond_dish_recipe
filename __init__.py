@@ -3,6 +3,7 @@
 
 from trytond.pool import Pool
 from . import dish_recipe
+from . import product
 
 
 def register():
@@ -11,4 +12,5 @@ def register():
         dish_recipe.RecipePrice,
         dish_recipe.RecipeComponent,
         dish_recipe.RecipeAttachment,
+        product.Product,
         module='dish_recipe', type_='model')
