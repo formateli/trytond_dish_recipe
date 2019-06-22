@@ -8,7 +8,7 @@ from . import dish_recipe
 def register():
     Pool.register(
         dish_recipe.Recipe,
+        dish_recipe.RecipePrice,
         dish_recipe.RecipeComponent,
         dish_recipe.RecipeAttachment,
-        dish_recipe.RecipeCostPrice,
         module='dish_recipe', type_='model')

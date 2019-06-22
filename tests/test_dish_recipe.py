@@ -33,44 +33,74 @@ class DishRecipeTestCase(ModuleTestCase):
         pool = Pool()
         Recipe = pool.get('dish_recipe.recipe')
         RecipeAttachment = pool.get('dish_recipe.recipe.attachment')
-        RecipeCostPrice = pool.get('dish_recipe.recipe.cost_price')
+        Product = pool.get('product.product')
 
-        company = create_company()
-        with set_company(company):
-            service = self._create_product('service', 'Unit', service=True)
-            recipe = Recipe(
-                product=service,
-            )
-            recipe.save()
-            self._check_nums(
-                recipe, Decimal('0.0'), Decimal('0.0'), Decimal('0.0'))
+        recipe_id = None
+        product_1_id = None
+        product_2_id = None
 
-            product_1 = self._create_product('product_1', 'Kilogram')
-            product_2 = self._create_product('product_1', 'Pound')
+        company_a = create_company(name='Company A')
+        company_b = create_company(name='Company B')
 
-            self._add_component(recipe, product_1, 250)
-            self._add_component(recipe, product_2, 600)
+        service = self._create_product('service', 'Unit', service=True)
+        recipe = Recipe(
+            product=service,
+        )
+        recipe.save()
+        recipe_id = recipe.id
+        self._check_nums(recipe, None, None, None)
 
+        product_1 = self._create_product('product_1', 'Kilogram')
+        product_1_id = product_1.id
+        product_2 = self._create_product('product_1', 'Pound')
+        product_2_id = product_2.id
+
+        self._add_component(recipe, product_1, 250)
+        self._add_component(recipe, product_2, 600)
+
+        self._check_nums(recipe, Decimal('0.0'), None, None)
+
+        with set_company(company_a):
             # Change cost (probably with a purchase)
-            product_1.cost_price = Decimal('1000.0')
-            product_1.save()
-            # still cost=0.0, need a cost/price process
-            self._check_nums(
-                recipe, Decimal('0.0'), Decimal('0.0'), Decimal('0.0'))
+            self._update_product_cost(product_1_id, Decimal('1000.0'))
 
-            cost_price = RecipeCostPrice(
-                recipe=recipe,
-            )
-            cost_price.update_cost_price()
-            recipe.cost_price = (cost_price,)
+        with set_company(company_b):
+            # Change cost (probably with a purchase)
+            self._update_product_cost(product_1_id, Decimal('2000.0'))
+
+        with set_company(company_a):
+            recipe = Recipe(recipe_id)
+            self._check_nums(recipe, Decimal('250.0'), None, None)
+            recipe.price = Decimal('500.0')
             recipe.save()
-            self._check_nums(
-                recipe, Decimal('1000.0'), Decimal('0.0'), Decimal('0.0'))
+
+        with set_company(company_b):
+            recipe = Recipe(recipe_id)
+            self._check_nums(recipe, Decimal('500.0'), None, None)
+            recipe.price = Decimal('800.0')
+            recipe.save()
+
+        with set_company(company_a):
+            recipe = Recipe(recipe_id)
+            self._check_nums(recipe,
+                Decimal('250.0'), Decimal('500.0'), Decimal('50.0'))
+
+        with set_company(company_b):
+            recipe = Recipe(recipe_id)
+            self._check_nums(recipe,
+                Decimal('500.0'), Decimal('800.0'), Decimal('62.5'))
 
     def _check_nums(self, recipe, cost, price, percentage):
         self.assertEqual(cost, recipe.cost)
         self.assertEqual(price, recipe.price)
         self.assertEqual(percentage, recipe.percentage)
+
+    def _update_product_cost(self, product_id, cost):
+        Product = Pool().get('product.product')
+        product = Product(product_id)
+        product.cost_price = cost
+        product.save()
+        return product
 
     def _add_component(self, recipe, product, qty):
         RecipeComponent = Pool().get('dish_recipe.recipe.component')
