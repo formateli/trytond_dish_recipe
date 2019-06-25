@@ -41,6 +41,17 @@ this repository contains the full copyright notices and license terms. -->
             <field name="name">component_tree</field>
         </record>
 
+        <record model="ir.ui.view" id="subrecipe_view_form">
+            <field name="model">dish_recipe.recipe.subrecipe</field>
+            <field name="type">form</field>
+            <field name="name">subrecipe_form</field>
+        </record>
+        <record model="ir.ui.view" id="subrecipe_view_tree">
+            <field name="model">dish_recipe.recipe.subrecipe</field>
+            <field name="type">tree</field>
+            <field name="name">subrecipe_tree</field>
+        </record>
+
         <record model="ir.ui.view" id="attachment_view_form">
             <field name="model">dish_recipe.recipe.attachment</field>
             <field name="type">form</field>
@@ -78,7 +89,7 @@ this repository contains the full copyright notices and license terms. -->
             <field name="act_window" ref="act_recipe_form"/>
         </record>
 
-        <menuitem name="Document type" id="menu_recipe"
+        <menuitem name="Recipes" id="menu_recipe"
             sequence="10" action="act_recipe_form"
             parent="menu_dish_recipe"/>
 

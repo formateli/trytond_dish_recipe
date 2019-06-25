@@ -38,10 +38,11 @@ class DishRecipeTestCase(ModuleTestCase):
 
         product_1 = self._create_product('product_1', 'Unit', service=True)
         recipe = Recipe(
+            name='Recipe',
             product=product_1
         )
         recipe.save()
-        self.assertEqual(recipe.rec_name, recipe.product.rec_name)
+        self.assertEqual(recipe.rec_name, 'Recipe')
 
         # Do not allow to use a product that already belongs to a recipe
         self.assertRaises(Exception, Recipe.create, [{
@@ -66,11 +67,12 @@ class DishRecipeTestCase(ModuleTestCase):
 
         service = self._create_product('service', 'Unit', service=True)
         recipe = Recipe(
+            name='Recipe 1',
             product=service,
         )
         recipe.save()
         recipe_id = recipe.id
-        self._check_nums(recipe, None, None, None)
+        self._check_nums(recipe, Decimal('0.0'), None, None)
 
         product_1 = self._create_product('product_1', 'Kilogram')
         product_1_id = product_1.id
@@ -113,28 +115,27 @@ class DishRecipeTestCase(ModuleTestCase):
                 Decimal('500.0'), Decimal('800.0'), Decimal('62.5'))
 
         # Sub recipes
-        service_2 = self._create_product('service 2', 'Unit', service=True)
         recipe_2 = Recipe(
-            product=service_2,
+            name='Recipe 2',
         )
         recipe_2.save()
         recipe_2_id = recipe_2.id
-        self._check_nums(recipe_2, None, None, None)
-        self._add_component(recipe_2, service, 2, unit_name='Unit')
+        self._check_nums(recipe_2, Decimal('0.0'), None, None)
+        self._add_subrecipe(recipe_2, recipe, 2)
 
         with set_company(company_a):
             recipe_2 = Recipe(recipe_2_id)
             recipe_2.price = Decimal('1000.0')
             recipe_2.save()
             self._check_nums(recipe_2,
-                Decimal('250.0'), Decimal('1000.0'), Decimal('25.0'))
+                Decimal('500.0'), Decimal('1000.0'), Decimal('50.0'))
 
         with set_company(company_b):
             recipe_2 = Recipe(recipe_2_id)
             recipe_2.price = Decimal('2500.0')
             recipe_2.save()
             self._check_nums(recipe_2,
-                Decimal('500.0'), Decimal('2500.0'), Decimal('20.0'))
+                Decimal('1000.0'), Decimal('2500.0'), Decimal('40.0'))
 
     def _check_nums(self, recipe, cost, price, percentage):
         self.assertEqual(cost, recipe.cost)
@@ -151,7 +152,6 @@ class DishRecipeTestCase(ModuleTestCase):
     def _add_component(self, recipe, product, qty, unit_name='Gram'):
         RecipeComponent = Pool().get('dish_recipe.recipe.component')
         uom = self._get_uom(unit_name)
-
         component = RecipeComponent(
             recipe=recipe,
             product=product,
@@ -159,8 +159,17 @@ class DishRecipeTestCase(ModuleTestCase):
             unit=uom,
         )
         component.save()
-
         return component
+
+    def _add_subrecipe(self, recipe, subrecipe, qty):
+        SubRecipe = Pool().get('dish_recipe.recipe.subrecipe')
+        subrecipe = SubRecipe(
+            recipe=recipe,
+            subrecipe=subrecipe,
+            quantity=qty,
+        )
+        subrecipe.save()
+        return subrecipe
 
     @classmethod
     def _create_product(cls, name, uom_name, service=False):

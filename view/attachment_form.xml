@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!-- This file is part of trytond-dish_recipe module. The COPYRIGHT file at the top level of
+this repository contains the full copyright notices and license terms. -->
+<form>
+    <label name="recipe"/>
+    <field name="recipe" colspan="3"/>
+    <label name="name"/>
+    <field name="name"/>
+    <label name="attachment"/>
+    <field name="attachment"/>
+    <label name="description"/>
+    <field name="description" colspan="3"/>
+</form>

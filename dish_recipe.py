@@ -12,9 +12,10 @@ from decimal import Decimal
 
 __all__ = [
         'Recipe',
+        'SubRecipe',
         'RecipePrice',
         'RecipeComponent',
-        'RecipeAttachment,'
+        'RecipeAttachment',
     ]
 
 
@@ -22,15 +23,16 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     'Dish Recipe'
     __name__ = 'dish_recipe.recipe'
 
-    product = fields.Many2One('product.product', 'Product',
-        required=True,
+    name = fields.Char('Name', required=True)
+    description = fields.Char('Brief Description', size=None)
+    preparation = fields.Text('Preparation')
+    product = fields.Many2One('product.product', 'Product associated',
+        help='Product associated with this recipe. It must ' 
+            'be "Service" type and "Unit" unit.',
         domain=[
             ('type', '=', 'service'),
             ('template.default_uom', '=', Eval('unit')),
-        ],
-        states={
-            'readonly': Bool(Eval('components')),
-        }, depends=['components', 'unit'])
+        ], depends=['unit'])
     unit = fields.Function(fields.Many2One('product.uom', 'Unit'),
         'get_unit')
     components = fields.One2Many('dish_recipe.recipe.component',
@@ -38,10 +40,19 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         domain=[
             ('product', '!=', Eval('product')),
         ], depends=['product'])
-    description = fields.Char('Brief Description', size=None)
-    preparation = fields.Text('Preparation')
+    subrecipes = fields.One2Many('dish_recipe.recipe.subrecipe',
+        'recipe', 'Sub Recipe',
+        domain=[
+            ('subrecipe.id', '!=', Eval('id')),
+        ], depends=['id'])
     attachments = fields.One2Many('dish_recipe.recipe.attachment',
         'recipe', 'Attachments')
+    cost_components = fields.Function(fields.Numeric('Cost',
+            digits=price_digits),
+        'get_cost_components')
+    cost_subrecipes = fields.Function(fields.Numeric('Cost',
+            digits=price_digits),
+        'get_cost_subrecipes')
     cost = fields.Function(fields.Numeric('Cost',
             digits=price_digits),
         'get_cost')
@@ -66,25 +77,20 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         uom_id = ModelData.get_id('product', 'uom_unit')
         return uom_id
 
-    def get_cost(self, name=None):
-        Uom = Pool().get('product.uom')
-        if not self.components:
-            return
+    def get_cost_components(self, name=None):
         result = Decimal('0.0')
         for component in self.components:
-            if component.product.recipe:
-                if not component.product.recipe[0].cost:
-                    continue
-                result += component.product.recipe[0].cost
-            else:
-                if not component.product.cost_price:
-                    continue
-                quantity = Uom.compute_qty(
-                    component.unit,
-                    component.quantity,
-                    component.product.default_uom)
-                result += Decimal(quantity) * component.product.cost_price
+            result += component.total_cost
         return result
+
+    def get_cost_subrecipes(self, name=None):
+        result = Decimal('0.0')
+        for recipe in self.subrecipes:
+            result += recipe.total_cost
+        return result
+
+    def get_cost(self, name=None):
+        return self.cost_components + self.cost_subrecipes
 
     def get_percentage(self, name=None):
         if self.price is None or self.cost is None:
@@ -96,23 +102,17 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     def validate(cls, recipes):
         Rcp = Pool().get('dish_recipe.recipe')
         for recipe in recipes:
-            rcp = Rcp.search([
-                    ('product', '=', recipe.product.id),
-                    ('id', '!=', recipe.id),
-                ])
-            if rcp:
-                raise UserError(
-                    gettext('dish_recipe.msg_product_selected',
-                        product=product.rec_name,
-                        recipe=recipe.rec_name,
-                        rcp=rcp.rec_name))
-
-    def get_rec_name(self, name):
-        return self.product.rec_name
-
-    @classmethod
-    def search_rec_name(cls, name, clause):
-        return [('product.rec_name', clause[1], clause[2])]
+            if recipe.product:
+                rcp = Rcp.search([
+                        ('product', '=', recipe.product.id),
+                        ('id', '!=', recipe.id),
+                    ])
+                if rcp:
+                    raise UserError(
+                        gettext('dish_recipe.msg_product_selected',
+                            product=product.rec_name,
+                            recipe=recipe.rec_name,
+                            rcp=rcp.rec_name))
 
 
 class RecipePrice(ModelSQL, CompanyValueMixin):
@@ -121,6 +121,46 @@ class RecipePrice(ModelSQL, CompanyValueMixin):
     recipe = fields.Many2One(
         'dish_recipe.recipe', 'Recipe', ondelete='CASCADE', select=True)
     price = fields.Numeric("Price", digits=price_digits)
+
+
+class SubRecipe(ModelSQL, ModelView):
+    'Sub Recipe'
+    __name__ = 'dish_recipe.recipe.subrecipe'
+
+    recipe = fields.Many2One('dish_recipe.recipe', 'Recipe',
+        ondelete='CASCADE', select=True, required=True)
+    unit_digits = fields.Function(fields.Integer('Unit Digits'),
+        'get_unit_digits')
+    subrecipe = fields.Many2One('dish_recipe.recipe', 'Recipe', required=True,
+        domain=[
+            ('id', '!=', Eval(
+                '_parent_recipe', {}).get(
+                'id', -1))
+        ])
+    quantity = fields.Float('Quantity', required=True,
+        digits=(16, Eval('unit_digits', 2)),
+        depends=['unit_digits'])
+    cost = fields.Function(fields.Numeric('Cost',
+            digits=price_digits),
+        'get_cost')
+    total_cost = fields.Function(fields.Numeric('Total',
+            digits=price_digits),
+        'get_total_cost')
+
+    def get_unit_digits(self, name=None):
+        if self.recipe:
+            return self.recipe.unit.digits
+        return 2
+
+    def get_cost(self, name=None):
+        if not self.subrecipe:
+            return decimal('0.0')
+        return self.subrecipe.cost
+
+    def get_total_cost(self, name=None):
+        if not self.quantity:
+            return Decimal('0.0')
+        return self.cost * Decimal(self.quantity)
 
 
 class RecipeComponent(ModelSQL, ModelView):
@@ -150,6 +190,12 @@ class RecipeComponent(ModelSQL, ModelView):
     product_uom_category = fields.Function(
         fields.Many2One('product.uom.category', 'Product Uom Category'),
         'on_change_with_product_uom_category')
+    cost = fields.Function(fields.Numeric('Cost',
+            digits=price_digits),
+        'get_cost')
+    total_cost = fields.Function(fields.Numeric('Total',
+            digits=price_digits),
+        'get_total_cost')
 
     @fields.depends('unit')
     def on_change_with_unit_digits(self, name=None):
@@ -161,6 +207,21 @@ class RecipeComponent(ModelSQL, ModelView):
     def on_change_with_product_uom_category(self, name=None):
         if self.product:
             return self.product.default_uom_category.id
+
+    def get_cost(self, name=None):
+        Uom = Pool().get('product.uom')
+        if not self.product or not self.unit:
+            return Decimal('0.0')
+        cost = Uom.compute_price(
+            self.product.default_uom,
+            self.product.cost_price,
+            self.unit)
+        return cost
+
+    def get_total_cost(self, name=None):
+        if not self.quantity:
+            return Decimal('0.0')
+        return self.cost * Decimal(self.quantity)
 
 
 class RecipeAttachment(ModelSQL, ModelView):

@@ -9,6 +9,7 @@ from . import product
 def register():
     Pool.register(
         dish_recipe.Recipe,
+        dish_recipe.SubRecipe,
         dish_recipe.RecipePrice,
         dish_recipe.RecipeComponent,
         dish_recipe.RecipeAttachment,
