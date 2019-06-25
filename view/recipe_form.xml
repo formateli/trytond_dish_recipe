@@ -16,16 +16,16 @@ this repository contains the full copyright notices and license terms. -->
     <label name="percentage"/>
     <field name="percentage"/>
     <notebook colspan="6">
-        <page name="preparation" id="preparation">
+        <page name="preparation">
             <field name="preparation" colspan="4"/>
         </page>
-        <page name="components" id="components">
+        <page name="components">
             <field name="components" colspan="4"/>
         </page>
-        <page name="subrecipes" id="subrecipes">
+        <page name="subrecipes">
             <field name="subrecipes" colspan="4"/>
         </page>
-        <page name="attachments" id="attachments">
+        <page name="attachments">
             <field name="attachments" colspan="4"/>
         </page>
     </notebook>
