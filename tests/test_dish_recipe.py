@@ -19,11 +19,16 @@ class DishRecipeTestCase(ModuleTestCase):
     def test_product_is_service(self):
         pool = Pool()
         Recipe = pool.get('dish_recipe.recipe')
+        Category = pool.get('dish_recipe.category')
         transaction = Transaction()
+
+        category = Category(name='Category')
+
         product_1 = self._create_product('product_1', 'Kilogram')
         # product must be a service
         self.assertRaises(Exception, Recipe.create, [{
                 'product': product_1.id,
+                'category': category.id,
                 }]
             )
         transaction.rollback()
@@ -32,6 +37,7 @@ class DishRecipeTestCase(ModuleTestCase):
         # product uom must be 'Unit'
         self.assertRaises(Exception, Recipe.create, [{
                 'product': product_1.id,
+                'category': category.id,
                 }]
             )
         transaction.rollback()
@@ -39,6 +45,7 @@ class DishRecipeTestCase(ModuleTestCase):
         product_1 = self._create_product('product_1', 'Unit', service=True)
         recipe = Recipe(
             name='Recipe',
+            category=category,
             product=product_1
         )
         recipe.save()
@@ -56,11 +63,14 @@ class DishRecipeTestCase(ModuleTestCase):
         pool = Pool()
         Recipe = pool.get('dish_recipe.recipe')
         RecipeAttachment = pool.get('dish_recipe.recipe.attachment')
+        Category = pool.get('dish_recipe.category')
         Product = pool.get('product.product')
 
         recipe_id = None
         product_1_id = None
         product_2_id = None
+
+        category = Category(name='Category')
 
         company_a = create_company(name='Company A')
         company_b = create_company(name='Company B')
@@ -68,6 +78,7 @@ class DishRecipeTestCase(ModuleTestCase):
         service = self._create_product('service', 'Unit', service=True)
         recipe = Recipe(
             name='Recipe 1',
+            category=category,
             product=service,
         )
         recipe.save()
@@ -117,6 +128,7 @@ class DishRecipeTestCase(ModuleTestCase):
         # Sub recipes
         recipe_2 = Recipe(
             name='Recipe 2',
+            category=category,
         )
         recipe_2.save()
         recipe_2_id = recipe_2.id

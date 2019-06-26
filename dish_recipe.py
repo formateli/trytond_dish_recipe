@@ -23,7 +23,7 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     'Dish Recipe'
     __name__ = 'dish_recipe.recipe'
 
-    name = fields.Char('Name', required=True)
+    name = fields.Char('Name', required=True, translate=True)
     description = fields.Char('Brief Description', size=None)
     preparation = fields.Text('Preparation')
     product = fields.Many2One('product.product', 'Product associated',
@@ -35,6 +35,8 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         ], depends=['unit'])
     unit = fields.Function(fields.Many2One('product.uom', 'Unit'),
         'get_unit')
+    category = fields.Many2One('dish_recipe.category',
+        'Category', required=True)
     components = fields.One2Many('dish_recipe.recipe.component',
         'recipe', 'Components',
         domain=[

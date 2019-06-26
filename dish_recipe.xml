@@ -90,7 +90,7 @@ this repository contains the full copyright notices and license terms. -->
         </record>
 
         <menuitem name="Recipes" id="menu_recipe"
-            sequence="10" action="act_recipe_form"
+            sequence="20" action="act_recipe_form"
             parent="menu_dish_recipe"/>
 
     </data>
