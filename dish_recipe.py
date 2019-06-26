@@ -56,7 +56,7 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     cost = fields.Function(fields.Numeric('Cost',
             digits=price_digits),
         'get_cost')
-    price = fields.MultiValue(fields.Numeric('Price', required=True,
+    price = fields.MultiValue(fields.Numeric('Price',
             digits=price_digits))
     prices = fields.One2Many(
         'dish_recipe.price', 'recipe', 'Prices')
@@ -82,14 +82,16 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         for component in self.components:
             if component.total_cost:
                 result += component.total_cost
-        return result
+        exp = Decimal(str(10.0 ** -price_digits[1]))
+        return result.quantize(exp)
 
     def get_cost_subrecipes(self, name=None):
         result = Decimal('0.0')
         for recipe in self.subrecipes:
             if recipe.total_cost:
                 result += recipe.total_cost
-        return result
+        exp = Decimal(str(10.0 ** -price_digits[1]))
+        return result.quantize(exp)
 
     def get_cost(self, name=None):
         return self.cost_components + self.cost_subrecipes
@@ -98,7 +100,8 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         if self.price is None or self.cost is None:
             return
         result = self.cost / self.price * Decimal('100.0')
-        return result
+        exp = Decimal(str(10.0 ** -price_digits[1]))
+        return result.quantize(exp)
 
     @fields.depends('cost', 'percentage',
         'components', 'subrecipes', 'price')
@@ -110,6 +113,10 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
 
     @fields.depends(methods=['on_change_price'])
     def on_change_components(self):
+        self.on_change_price()
+
+    @fields.depends(methods=['on_change_price'])
+    def on_change_subrecipes(self):
         self.on_change_price()
 
     @classmethod
@@ -167,13 +174,22 @@ class SubRecipe(ModelSQL, ModelView):
 
     def get_cost(self, name=None):
         if not self.subrecipe:
-            return decimal('0.0')
+            return Decimal('0.0')
         return self.subrecipe.cost
 
     def get_total_cost(self, name=None):
         if not self.quantity:
             return Decimal('0.0')
         return self.cost * Decimal(self.quantity)
+
+    @fields.depends('quantity', 'subrecipe')
+    def on_change_subrecipe(self):
+        self.cost = self.get_cost()
+        self.total_cost = self.get_total_cost()
+
+    @fields.depends(methods=['on_change_subrecipe'])
+    def on_change_quantity(self):
+        self.on_change_subrecipe()
 
 
 class RecipeComponent(ModelSQL, ModelView):
@@ -236,8 +252,7 @@ class RecipeComponent(ModelSQL, ModelView):
             return Decimal('0.0')
         return self.cost * Decimal(self.quantity)
 
-    @fields.depends('cost', 'total_cost',
-        'product', 'unit', 'quantity')
+    @fields.depends('product', 'unit', 'quantity')
     def on_change_quantity(self):
         self.cost = self.get_cost()
         self.total_cost = self.get_total_cost()
