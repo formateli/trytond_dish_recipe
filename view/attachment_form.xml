@@ -5,9 +5,11 @@ this repository contains the full copyright notices and license terms. -->
     <label name="recipe"/>
     <field name="recipe" colspan="3"/>
     <label name="name"/>
-    <field name="name"/>
-    <label name="attachment"/>
-    <field name="attachment"/>
+    <field name="name" colspan="2"/>
+    <newline/>
     <label name="description"/>
     <field name="description" colspan="3"/>
+    <newline/>
+    <label name="attachment"/>
+    <field name="attachment" widget="image" height="400" width="400"/>
 </form>
