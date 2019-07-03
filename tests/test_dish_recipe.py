@@ -62,7 +62,6 @@ class DishRecipeTestCase(ModuleTestCase):
     def test_dish_recipe(self):
         pool = Pool()
         Recipe = pool.get('dish_recipe.recipe')
-        RecipeAttachment = pool.get('dish_recipe.recipe.attachment')
         Category = pool.get('dish_recipe.category')
         Product = pool.get('product.product')
 

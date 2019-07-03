@@ -52,13 +52,9 @@ this repository contains the full copyright notices and license terms. -->
             <field name="name">subrecipe_tree</field>
         </record>
 
-        <record model="ir.ui.view" id="attachment_view_form">
-            <field name="model">dish_recipe.recipe.attachment</field>
-            <field name="type">form</field>
-            <field name="name">attachment_form</field>
-        </record>
+        <!-- Attachment -->
         <record model="ir.ui.view" id="attachment_view_tree">
-            <field name="model">dish_recipe.recipe.attachment</field>
+            <field name="model">ir.attachment</field>
             <field name="type">tree</field>
             <field name="name">attachment_tree</field>
         </record>

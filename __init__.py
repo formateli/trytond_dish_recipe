@@ -13,7 +13,6 @@ def register():
         dish_recipe.SubRecipe,
         dish_recipe.RecipePrice,
         dish_recipe.RecipeComponent,
-        dish_recipe.RecipeAttachment,
         category.Category,
         product.Product,
         module='dish_recipe', type_='model')

@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
-<!-- This file is part of tryton-dish_recipe project for Tryton. The COPYRIGHT file at the top level of
-this repository contains the full copyright notices and license terms. -->
+<!-- This file is part helpdesk module for Tryton.
+The COPYRIGHT file at the top level of this repository contains the full copyright notices and license terms. -->
 <tree>
-    <field name="recipe"/>
     <field name="name"/>
-    <field name="description"/>
+    <field name="summary"/>
+    <field name="last_user"/>
+    <field name="last_modification" widget="date"/>
+    <field name="last_modification" widget="time" string="Time"/>
 </tree>

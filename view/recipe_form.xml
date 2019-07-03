@@ -27,7 +27,7 @@ this repository contains the full copyright notices and license terms. -->
             <field name="subrecipes" colspan="4"/>
         </page>
         <page name="attachments">
-            <field name="attachments" colspan="4"/>
+            <field name="attachments" view_ids="dish_recipe.attachment_view_tree" colspan="4"/>
         </page>
     </notebook>
 </form>

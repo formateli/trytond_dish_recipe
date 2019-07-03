@@ -7,6 +7,7 @@ from trytond.pyson import Bool, Eval, If
 from trytond.modules.company.model import (
     CompanyMultiValueMixin, CompanyValueMixin)
 from trytond.exceptions import UserError
+from trytond.i18n import gettext
 from trytond.modules.product import price_digits
 from decimal import Decimal
 
@@ -15,7 +16,6 @@ __all__ = [
         'SubRecipe',
         'RecipePrice',
         'RecipeComponent',
-        'RecipeAttachment',
     ]
 
 
@@ -47,8 +47,7 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         domain=[
             ('subrecipe.id', '!=', Eval('id')),
         ], depends=['id'])
-    attachments = fields.One2Many('dish_recipe.recipe.attachment',
-        'recipe', 'Attachments')
+    attachments = fields.One2Many('ir.attachment', 'resource', 'Attachments')
     cost_components = fields.Function(fields.Numeric('Cost',
             digits=price_digits),
         'get_cost_components')
@@ -120,6 +119,21 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     @fields.depends(methods=['on_change_price'])
     def on_change_subrecipes(self):
         self.on_change_price()
+
+    @classmethod
+    def delete(cls, recipes):
+        Attachment = Pool().get('ir.attachment')
+        attachments = [a for h in recipes for a in h.attachments]
+        Attachment.delete(attachments)
+        super(Recipe, cls).delete(recipes)
+
+    @classmethod
+    def copy(cls, recipes, default=None):
+        if default is None:
+            default = {}
+        default = default.copy()
+        default['attachments'] = None
+        return super(Recipe, cls).copy(recipes, default=default)
 
     @classmethod
     def validate(cls, recipes):
@@ -262,18 +276,3 @@ class RecipeComponent(ModelSQL, ModelView):
     @fields.depends(methods=['on_change_quantity'])
     def on_change_unit(self):
         self.on_change_quantity()
-
-
-class RecipeAttachment(ModelSQL, ModelView):
-    'Recipe Attachment'
-    __name__ = 'dish_recipe.recipe.attachment'
-
-    recipe = fields.Many2One(
-        'dish_recipe.recipe', 'Recipe', required=True)
-    name = fields.Char('Name', required=True)
-    description = fields.Text('Description', size=None)
-    attachment = fields.Binary('Attachment', file_id='doc_id',
-        required=True)
-    doc_id = fields.Char('Doc id',
-            states={'invisible': True}
-        )
