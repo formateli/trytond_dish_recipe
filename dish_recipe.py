@@ -184,9 +184,7 @@ class SubRecipe(ModelSQL, ModelView):
         'get_total_cost')
 
     def get_unit_digits(self, name=None):
-        if self.recipe:
-            return self.recipe.unit.digits
-        return 2
+        return price_digits
 
     def get_cost(self, name=None):
         if not self.subrecipe:
