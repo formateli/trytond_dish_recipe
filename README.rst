@@ -1,5 +1,5 @@
-Dish Recipe Product
-###################
+Dish Recipe Module
+##################
 
 Dish Recipe module.
 
@@ -18,5 +18,5 @@ See COPYRIGHT
 
 For more information please visit the Tryton web site:
 
-  http://www.formateli.com/
-  http://www.tryton.org/
+  * http://www.formateli.com/
+  * http://www.tryton.org/
