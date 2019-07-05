@@ -1,7 +1,7 @@
-Dish Recipe Module
-##################
+Dish Recipe
+###########
 
-Dish Recipe module.
+Dish Recipe Tryton module.
 
 Preparation of recipes, components, attachments, sub recipes, etc.
 

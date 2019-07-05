@@ -184,7 +184,7 @@ class SubRecipe(ModelSQL, ModelView):
         'get_total_cost')
 
     def get_unit_digits(self, name=None):
-        return price_digits
+        return price_digits[1]
 
     def get_cost(self, name=None):
         if not self.subrecipe:
@@ -227,7 +227,7 @@ class RecipeComponent(ModelSQL, ModelView):
         domain=[
             If(Bool(Eval('product_uom_category')),
                 ('category', '=', Eval('product_uom_category')),
-                ('category', '!=', -1)),
+                ('category', '=', -1)),
             ],
         depends=['product_uom_category'])
     product_uom_category = fields.Function(
