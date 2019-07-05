@@ -6,5 +6,4 @@ try:
 except ImportError:
     from .test_dish_recipe import suite
 
-
 __all__ = ['suite']

@@ -16,7 +16,7 @@ Copyright
 See COPYRIGHT
 
 
-For more information please visit the Tryton web site:
+For more information please visit:
 
   * http://www.formateli.com/
   * http://www.tryton.org/
