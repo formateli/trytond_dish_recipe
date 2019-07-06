@@ -6,56 +6,12 @@ from trytond.pool import Pool
 from trytond.transaction import Transaction
 from trytond.tests.test_tryton import ModuleTestCase, with_transaction
 from trytond.modules.company.tests import create_company, set_company
-from trytond.exceptions import UserError
 from decimal import Decimal
 
 
 class DishRecipeTestCase(ModuleTestCase):
     'Test Dish Recipe module'
     module = 'dish_recipe'
-
-    @with_transaction()
-    def test_product_is_service(self):
-        pool = Pool()
-        Recipe = pool.get('dish_recipe.recipe')
-        Category = pool.get('dish_recipe.category')
-        transaction = Transaction()
-
-        category = Category(name='Category')
-
-        product_1 = self._create_product('product_1', 'Kilogram')
-        # product must be a service
-        self.assertRaises(Exception, Recipe.create, [{
-                'product': product_1.id,
-                'category': category.id,
-                }]
-            )
-        transaction.rollback()
-
-        product_1 = self._create_product('product_1', 'Kilogram', service=True)
-        # product uom must be 'Unit'
-        self.assertRaises(Exception, Recipe.create, [{
-                'product': product_1.id,
-                'category': category.id,
-                }]
-            )
-        transaction.rollback()
-
-        product_1 = self._create_product('product_1', 'Unit', service=True)
-        recipe = Recipe(
-            name='Recipe',
-            category=category,
-            product=product_1
-        )
-        recipe.save()
-        self.assertEqual(recipe.rec_name, 'Recipe')
-
-        # Do not allow to use a product that already belongs to a recipe
-        self.assertRaises(Exception, Recipe.create, [{
-                'product': product_1.id,
-                }]
-            )
-        transaction.rollback()
 
     @with_transaction()
     def test_dish_recipe(self):
@@ -73,11 +29,9 @@ class DishRecipeTestCase(ModuleTestCase):
         company_a = create_company(name='Company A')
         company_b = create_company(name='Company B')
 
-        service = self._create_product('service', 'Unit', service=True)
         recipe = Recipe(
             name='Recipe 1',
             category=category,
-            product=service,
         )
         recipe.save()
         recipe_id = recipe.id

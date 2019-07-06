@@ -6,8 +6,6 @@ from trytond.transaction import Transaction
 from trytond.pyson import Bool, Eval, If
 from trytond.modules.company.model import (
     CompanyMultiValueMixin, CompanyValueMixin)
-from trytond.exceptions import UserError
-from trytond.i18n import gettext
 from trytond.modules.product import price_digits
 from decimal import Decimal
 
@@ -26,22 +24,10 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     name = fields.Char('Name', required=True, translate=True)
     description = fields.Char('Brief Description', size=None)
     preparation = fields.Text('Preparation')
-    product = fields.Many2One('product.product', 'Product associated',
-        help='Product associated with this recipe. It must ' 
-            'be "Service" type and "Unit" unit.',
-        domain=[
-            ('type', '=', 'service'),
-            ('template.default_uom', '=', Eval('unit')),
-        ], depends=['unit'])
-    unit = fields.Function(fields.Many2One('product.uom', 'Unit'),
-        'get_unit')
     category = fields.Many2One('dish_recipe.category',
         'Category', required=True)
     components = fields.One2Many('dish_recipe.recipe.component',
-        'recipe', 'Components',
-        domain=[
-            ('product', '!=', Eval('product')),
-        ], depends=['product'])
+        'recipe', 'Components')
     subrecipes = fields.One2Many('dish_recipe.recipe.subrecipe',
         'recipe', 'Sub Recipe',
         domain=[
@@ -71,12 +57,6 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         if field == 'price':
             return pool.get('dish_recipe.price')
         return super(Recipe, cls).multivalue_model(field)
-
-    def get_unit(self, name=None):
-        pool = Pool()
-        ModelData = pool.get('ir.model.data')
-        uom_id = ModelData.get_id('product', 'uom_unit')
-        return uom_id
 
     def get_cost_components(self, name=None):
         result = Decimal('0.0')
@@ -134,21 +114,6 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         default = default.copy()
         default['attachments'] = None
         return super(Recipe, cls).copy(recipes, default=default)
-
-    @classmethod
-    def validate(cls, recipes):
-        for recipe in recipes:
-            if recipe.product:
-                rcp = cls.search([
-                        ('product', '=', recipe.product.id),
-                        ('id', '!=', recipe.id),
-                    ])
-                if rcp:
-                    raise UserError(
-                        gettext('dish_recipe.msg_product_selected',
-                            product=product.rec_name,
-                            recipe=recipe.rec_name,
-                            rcp=rcp.rec_name))
 
 
 class RecipePrice(ModelSQL, CompanyValueMixin):
