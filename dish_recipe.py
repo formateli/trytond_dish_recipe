@@ -50,6 +50,7 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     percentage = fields.Function(fields.Numeric('Percentage',
             digits=price_digits),
         'get_percentage')
+    active = fields.Boolean('Activo')
 
     @classmethod
     def multivalue_model(cls, field):
@@ -57,6 +58,10 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         if field == 'price':
             return pool.get('dish_recipe.price')
         return super(Recipe, cls).multivalue_model(field)
+
+    @staticmethod
+    def default_active():
+        return True
 
     def get_cost_components(self, name=None):
         result = Decimal('0.0')
