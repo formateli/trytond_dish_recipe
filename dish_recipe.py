@@ -50,7 +50,7 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     percentage = fields.Function(fields.Numeric('Percentage',
             digits=price_digits),
         'get_percentage')
-    active = fields.Boolean('Activo')
+    active = fields.Boolean('Active')
 
     @classmethod
     def multivalue_model(cls, field):
