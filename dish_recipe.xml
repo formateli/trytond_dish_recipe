@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- This file is part of tryton-dish_recipe project for Tryton. The COPYRIGHT file at the top level of
+<!-- This file is part of tryton-dish_recipe module for Tryton. The COPYRIGHT file at the top level of
 this repository contains the full copyright notices and license terms. -->
 <tryton>
     <data>
@@ -53,11 +53,15 @@ this repository contains the full copyright notices and license terms. -->
         </record>
 
         <!-- Attachment -->
+
         <record model="ir.ui.view" id="attachment_view_tree">
             <field name="model">ir.attachment</field>
             <field name="type">tree</field>
             <field name="name">attachment_tree</field>
         </record>
+
+
+        <!-- Recipe -->
 
         <record model="ir.ui.view" id="recipe_view_form">
             <field name="model">dish_recipe.recipe</field>
