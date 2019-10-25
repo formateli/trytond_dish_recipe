@@ -20,7 +20,6 @@ __all__ = [
 class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     'Dish Recipe'
     __name__ = 'dish_recipe.recipe'
-
     name = fields.Char('Name', required=True, translate=True)
     description = fields.Char('Brief Description', size=None)
     preparation = fields.Text('Preparation')

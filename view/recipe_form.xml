@@ -21,8 +21,6 @@ this repository contains the full copyright notices and license terms. -->
         </page>
         <page name="components">
             <field name="components" colspan="4"/>
-        </page>
-        <page name="subrecipes">
             <field name="subrecipes" colspan="4"/>
         </page>
         <page name="attachments">
