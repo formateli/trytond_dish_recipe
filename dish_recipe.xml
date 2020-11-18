@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<!-- This file is part of tryton-dish_recipe module for Tryton. The COPYRIGHT file at the top level of
+this repository contains the full copyright notices and license terms. -->
+<tryton>
+    <data>
+        <record model="res.group" id="group_dish_recipe">
+            <field name="name">Dish Recipe</field>
+        </record>
+        <record model="res.group" id="group_dish_recipe_admin">
+            <field name="name">Dish Recipe Administration</field>
+        </record>
+        <record model="res.user-res.group" id="user_admin_group_dish_recipe">
+            <field name="user" ref="res.user_admin"/>
+            <field name="group" ref="group_dish_recipe"/>
+        </record>
+        <record model="res.user-res.group" id="user_admin_group_dish_recipe_admin">
+            <field name="user" ref="res.user_admin"/>
+            <field name="group" ref="group_dish_recipe_admin"/>
+        </record>
+
+        <record model="ir.ui.icon" id="dish_recipe_icon">
+            <field name="name">dish_recipe</field>
+            <field name="path">icons/dish_recipe.svg</field>
+        </record>
+
+        <menuitem name="Dish Recipe" id="menu_dish_recipe" sequence="10"
+            icon="dish_recipe"/>
+        <record model="ir.ui.menu-res.group" id="menu_dish_recipe_group_dish_recipe">
+            <field name="menu" ref="menu_dish_recipe"/>
+            <field name="group" ref="group_dish_recipe"/>
+        </record>
+
+        <record model="ir.ui.view" id="component_view_form">
+            <field name="model">dish_recipe.recipe.component</field>
+            <field name="type">form</field>
+            <field name="name">component_form</field>
+        </record>
+        <record model="ir.ui.view" id="component_view_tree">
+            <field name="model">dish_recipe.recipe.component</field>
+            <field name="type">tree</field>
+            <field name="name">component_tree</field>
+        </record>
+
+        <record model="ir.ui.view" id="subrecipe_view_form">
+            <field name="model">dish_recipe.recipe.subrecipe</field>
+            <field name="type">form</field>
+            <field name="name">subrecipe_form</field>
+        </record>
+        <record model="ir.ui.view" id="subrecipe_view_tree">
+            <field name="model">dish_recipe.recipe.subrecipe</field>
+            <field name="type">tree</field>
+            <field name="name">subrecipe_tree</field>
+        </record>
+
+        <!-- Attachment -->
+
+        <record model="ir.ui.view" id="attachment_view_tree">
+            <field name="model">ir.attachment</field>
+            <field name="type">tree</field>
+            <field name="name">attachment_tree</field>
+        </record>
+
+
+        <!-- Recipe -->
+
+        <record model="ir.ui.view" id="recipe_view_form">
+            <field name="model">dish_recipe.recipe</field>
+            <field name="type">form</field>
+            <field name="name">recipe_form</field>
+        </record>
+        <record model="ir.ui.view" id="recipe_view_tree">
+            <field name="model">dish_recipe.recipe</field>
+            <field name="type">tree</field>
+            <field name="name">recipe_tree</field>
+        </record>
+        <record model="ir.action.act_window" id="act_recipe_form">
+            <field name="name">Recipes</field>
+            <field name="res_model">dish_recipe.recipe</field>
+            <field name="search_value"></field>
+        </record>
+        <record model="ir.action.act_window.view" id="act_recipe_form_view1">
+            <field name="sequence" eval="10"/>
+            <field name="view" ref="recipe_view_tree"/>
+            <field name="act_window" ref="act_recipe_form"/>
+        </record>
+        <record model="ir.action.act_window.view" id="act_recipe_form_view2">
+            <field name="sequence" eval="20"/>
+            <field name="view" ref="recipe_view_form"/>
+            <field name="act_window" ref="act_recipe_form"/>
+        </record>
+
+        <menuitem name="Recipes" id="menu_recipe"
+            sequence="20" action="act_recipe_form"
+            parent="menu_dish_recipe"/>
+
+        <record model="ir.action.act_window" id="act_recipe_by_category">
+            <field name="name">Recipe by Category</field>
+            <field name="res_model">dish_recipe.recipe</field>
+            <field name="context"
+                eval="{'category': Eval('active_id')}" pyson="1"/>
+            <field name="domain"
+                eval="[('category','=', Eval('active_id'))]"
+                pyson="1"/>
+        </record>
+        <record model="ir.action.act_window.view" id="act_recipe_by_category_view1">
+            <field name="sequence" eval="10"/>
+            <field name="view" ref="recipe_view_tree"/>
+            <field name="act_window" ref="act_recipe_by_category"/>
+        </record>
+        <record model="ir.action.act_window.view" id="act_recipe_by_category_view2">
+            <field name="sequence" eval="20"/>
+            <field name="view" ref="recipe_view_form"/>
+            <field name="act_window" ref="act_recipe_by_category"/>
+        </record>
+        <record model="ir.action.keyword" id="act_recipe_by_category_keyword1">
+            <field name="keyword">tree_open</field>
+            <field name="model">dish_recipe.category,-1</field>
+            <field name="action" ref="act_recipe_by_category"/>
+        </record>
+
+    </data>
+</tryton>
