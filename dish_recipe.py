@@ -26,11 +26,14 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     category = fields.Many2One('dish_recipe.category',
         'Category', required=True)
     components = fields.One2Many('dish_recipe.recipe.component',
-        'recipe', 'Components')
+        'recipe', 'Components',
+        domain=[
+            ('product', '!=', Eval('product')),
+        ], depends=['product'])
     subrecipes = fields.One2Many('dish_recipe.recipe.subrecipe',
         'recipe', 'Sub Recipe',
         domain=[
-            ('subrecipe.id', '!=', Eval('id')),
+            ('id', '!=', Eval('id')),
         ], depends=['id'])
     attachments = fields.One2Many('ir.attachment', 'resource', 'Attachments')
     cost_components = fields.Function(fields.Numeric('Cost',
@@ -49,6 +52,29 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     percentage = fields.Function(fields.Numeric('Percentage',
             digits=price_digits),
         'get_percentage')
+    product = fields.Many2One('product.product', 'Product associated',
+        help='Product associated with this recipe.')
+    unit_digits = fields.Function(fields.Integer('Unit Digits'),
+        'on_change_with_unit_digits')
+    quantity = fields.Float('Quantity',
+        digits=(16, Eval('unit_digits', 2)),
+        states={
+            'required': Bool(Eval('product')),
+        },
+        depends=['product', 'unit_digits'])
+    unit = fields.Many2One('product.uom', 'Unit',
+        domain=[
+            If(Bool(Eval('product_uom_category')),
+                ('category', '=', Eval('product_uom_category')),
+                ('category', '=', -1)),
+            ],
+        states={
+            'required': Bool(Eval('product')),
+        },
+        depends=['product', 'product_uom_category'])
+    product_uom_category = fields.Function(
+        fields.Many2One('product.uom.category', 'Product Uom Category'),
+        'on_change_with_product_uom_category')
     active = fields.Boolean('Active')
 
     @classmethod
@@ -118,6 +144,33 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         default = default.copy()
         default['attachments'] = None
         return super(Recipe, cls).copy(recipes, default=default)
+
+    @fields.depends('unit')
+    def on_change_with_unit_digits(self, name=None):
+        if self.unit:
+            return self.unit.digits
+        return 2
+
+    @fields.depends('product')
+    def on_change_with_product_uom_category(self, name=None):
+        if self.product:
+            return self.product.default_uom_category.id
+
+    @classmethod
+    def validate(cls, recipes):
+        for recipe in recipes:
+            if recipe.product:
+                rcp = cls.search([
+                        ('product', '=', recipe.product.id),
+                        ('id', '!=', recipe.id),
+                    ])
+                if rcp:
+                    raise UserError(
+                        gettext('dish_recipe_product.msg_product_selected',
+                            product=product.rec_name,
+                            recipe=recipe.rec_name,
+                            rcp=rcp.rec_name))
+        super(Recipe, cls).validate(recipes)
 
 
 class RecipePrice(ModelSQL, CompanyValueMixin):
