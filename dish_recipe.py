@@ -9,13 +9,6 @@ from trytond.modules.company.model import (
 from trytond.modules.product import price_digits
 from decimal import Decimal
 
-__all__ = [
-        'Recipe',
-        'SubRecipe',
-        'RecipePrice',
-        'RecipeComponent',
-    ]
-
 
 class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     'Dish Recipe'
@@ -54,28 +47,16 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         'get_percentage')
     product = fields.Many2One('product.product', 'Product associated',
         help='Product associated with this recipe.')
-    unit_digits = fields.Function(fields.Integer('Unit Digits'),
-        'on_change_with_unit_digits')
-    quantity = fields.Float('Quantity',
-        digits=(16, Eval('unit_digits', 2)),
-        states={
-            'required': Bool(Eval('product')),
-        },
-        depends=['product', 'unit_digits'])
-    unit = fields.Many2One('product.uom', 'Unit',
-        domain=[
-            If(Bool(Eval('product_uom_category')),
-                ('category', '=', Eval('product_uom_category')),
-                ('category', '=', -1)),
-            ],
-        states={
-            'required': Bool(Eval('product')),
-        },
-        depends=['product', 'product_uom_category'])
-    product_uom_category = fields.Function(
-        fields.Many2One('product.uom.category', 'Product Uom Category'),
-        'on_change_with_product_uom_category')
     active = fields.Boolean('Active')
+
+    @classmethod
+    def __register__(cls, module_name):
+        super(Recipe, cls).__register__(module_name)
+        table = cls.__table_handler__(module_name)
+        # Migration from 5.8.0:
+        if table.column_exist('quantity'):
+            table.drop_column('quantity')
+            table.drop_column('unit')
 
     @classmethod
     def multivalue_model(cls, field):
@@ -144,17 +125,6 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         default = default.copy()
         default['attachments'] = None
         return super(Recipe, cls).copy(recipes, default=default)
-
-    @fields.depends('unit')
-    def on_change_with_unit_digits(self, name=None):
-        if self.unit:
-            return self.unit.digits
-        return 2
-
-    @fields.depends('product')
-    def on_change_with_product_uom_category(self, name=None):
-        if self.product:
-            return self.product.default_uom_category.id
 
     @classmethod
     def validate(cls, recipes):
