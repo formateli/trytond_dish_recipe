@@ -7,5 +7,6 @@ this repository contains the full copyright notices and license terms. -->
     <field name="quantity"/>
     <field name="unit"/>
     <field name="cost"/>
+    <field name="waste"/>
     <field name="total_cost"/>
 </tree>

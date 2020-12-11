@@ -13,6 +13,8 @@ this repository contains the full copyright notices and license terms. -->
     <field name="unit"/>
     <label name="cost"/>
     <field name="cost"/>
+    <label name="waste"/>
+    <field name="waste"/>
     <label name="total_cost"/>
     <field name="total_cost"/>
 </form>

@@ -225,12 +225,13 @@ class RecipeComponent(ModelSQL, ModelView):
     product_uom_category = fields.Function(
         fields.Many2One('product.uom.category', 'Product Uom Category'),
         'on_change_with_product_uom_category')
+    waste = fields.Float('Waste Percentage', digits=price_digits)
     cost = fields.Function(fields.Numeric('Cost',
             digits=price_digits),
-        'get_cost')
+        'on_change_with_cost')
     total_cost = fields.Function(fields.Numeric('Total',
             digits=price_digits),
-        'get_total_cost')
+        'on_change_with_total_cost')
 
     @fields.depends('unit')
     def on_change_with_unit_digits(self, name=None):
@@ -243,26 +244,51 @@ class RecipeComponent(ModelSQL, ModelView):
         if self.product:
             return self.product.default_uom_category.id
 
-    def get_cost(self, name=None):
-        Uom = Pool().get('product.uom')
+    #def get_cost(self, name=None):
+    #    Uom = Pool().get('product.uom')
+    #    if not self.product or not self.unit:
+    #        return Decimal('0.0')
+    #    cost = Uom.compute_price(
+    #        self.product.default_uom,
+    #        self.product.cost_price,
+    #        self.unit)
+    #    return cost
+
+    @fields.depends('product', 'unit')
+    def on_change_with_cost(self, name=None):
         if not self.product or not self.unit:
             return Decimal('0.0')
+        Uom = Pool().get('product.uom')
         cost = Uom.compute_price(
             self.product.default_uom,
             self.product.cost_price,
             self.unit)
         return cost
 
-    def get_total_cost(self, name=None):
+    @fields.depends('quantity', 'cost', 'waste')
+    def on_change_with_total_cost(self, name=None):
         if not self.quantity:
             return Decimal('0.0')
-        return self.cost * Decimal(self.quantity)
+        total = self.cost * Decimal(self.quantity)
+        if self.waste and (self.waste > 0 and self.waste < 100):
+            waste = total * Decimal((self.waste / 100))
+            total += waste
+        return total
 
-    @fields.depends('product', 'unit', 'quantity')
-    def on_change_quantity(self):
-        self.cost = self.get_cost()
-        self.total_cost = self.get_total_cost()
+    #def get_total_cost(self, name=None):
+    #    if not self.quantity:
+    #        return Decimal('0.0')
+    #   total = self.cost * Decimal(self.quantity)
+    #    if self.waste and (self.waste > 0 and self.waste < 100):
+    #        waste = total * (self.waste / 100)
+    #        total += waste
+    #    return total
 
-    @fields.depends(methods=['on_change_quantity'])
-    def on_change_unit(self):
-        self.on_change_quantity()
+    #@fields.depends('product', 'unit', 'quantity')
+    #def on_change_quantity(self):
+    #    self.cost = self.get_cost()
+    #    self.total_cost = self.get_total_cost()
+
+    #@fields.depends(methods=['on_change_quantity'])
+    #def on_change_unit(self):
+    #    self.on_change_quantity()
