@@ -6,6 +6,8 @@ this repository contains the full copyright notices and license terms. -->
     <field name="recipe" colspan="5"/>
     <label name="product"/>
     <field name="product"/>
+    <label name="taxes"/>
+    <field name="taxes"/>
     <newline/>
     <label name="quantity"/>
     <field name="quantity"/>
