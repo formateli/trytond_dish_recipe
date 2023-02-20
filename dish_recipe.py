@@ -148,7 +148,7 @@ class RecipePrice(ModelSQL, CompanyValueMixin):
     "Recipe Price"
     __name__ = 'dish_recipe.price'
     recipe = fields.Many2One(
-        'dish_recipe.recipe', 'Recipe', ondelete='CASCADE', select=True)
+        'dish_recipe.recipe', 'Recipe', ondelete='CASCADE')
     price = fields.Numeric("Price", digits=price_digits)
 
 
@@ -157,7 +157,7 @@ class SubRecipe(ModelSQL, ModelView):
     __name__ = 'dish_recipe.recipe.subrecipe'
 
     recipe = fields.Many2One('dish_recipe.recipe', 'Recipe',
-        ondelete='CASCADE', select=True, required=True)
+        ondelete='CASCADE', required=True)
     unit_digits = fields.Function(fields.Integer('Unit Digits'),
         'get_unit_digits')
     subrecipe = fields.Many2One('dish_recipe.recipe', 'Recipe', required=True,
@@ -204,7 +204,7 @@ class RecipeComponent(ModelSQL, ModelView):
     __name__ = 'dish_recipe.recipe.component'
 
     recipe = fields.Many2One('dish_recipe.recipe', 'Recipe',
-        ondelete='CASCADE', select=True, required=True)
+        ondelete='CASCADE', required=True)
     unit_digits = fields.Function(fields.Integer('Unit Digits'),
         'on_change_with_unit_digits')
     product = fields.Many2One('product.product', 'Product', required=True,

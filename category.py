@@ -8,7 +8,7 @@ class Category(tree(separator=' / '), ModelSQL, ModelView):
     "Recipe Category"
     __name__ = "dish_recipe.category"
     name = fields.Char('Name', required=True, translate=True)
-    parent = fields.Many2One('dish_recipe.category', 'Parent', select=True,
+    parent = fields.Many2One('dish_recipe.category', 'Parent',
         domain=[
             ('id', '!=', Eval('id')),
         ], depends=['id'])
