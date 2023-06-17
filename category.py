@@ -1,10 +1,10 @@
 # This file is part of Tryton.  The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
-from trytond.model import ModelView, ModelSQL, fields, tree
+from trytond.model import ModelView, ModelSQL, fields, tree, sequence_ordered
 from trytond.pyson import Eval
 
 
-class Category(tree(separator=' / '), ModelSQL, ModelView):
+class Category(tree(separator=' / '), sequence_ordered(), ModelSQL, ModelView):
     "Recipe Category"
     __name__ = "dish_recipe.category"
     name = fields.Char('Name', required=True, translate=True)
@@ -16,8 +16,15 @@ class Category(tree(separator=' / '), ModelSQL, ModelView):
             string='Children')
     recipes = fields.One2Many('dish_recipe.recipe',
             'category', 'Recipes')
+    info_1 = fields.Char('Info 1')
+    info_2 = fields.Char('Info 2')
+    info_3 = fields.Char('Info 3')
 
     @classmethod
     def __setup__(cls):
         super(Category, cls).__setup__()
-        cls._order.insert(0, ('name', 'ASC'))
+        cls._order = [
+            ('sequence', 'ASC'),
+            ('name', 'DESC'),
+            ('id', 'DESC'),
+            ]

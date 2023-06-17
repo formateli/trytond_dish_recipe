@@ -1,6 +1,6 @@
 #This file is part of tryton-dish_recipe project. The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
-from trytond.model import ModelView, ModelSQL, fields
+from trytond.model import ModelView, ModelSQL, fields,  sequence_ordered
 from trytond.pool import Pool
 from trytond.transaction import Transaction
 from trytond.pyson import Bool, Eval, If
@@ -9,13 +9,14 @@ from trytond.modules.company.model import (
 from trytond.modules.product import price_digits
 from trytond.modules.account.tax import _TaxKey
 from decimal import Decimal
+import base64
 
 
-class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
+class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
     'Dish Recipe'
     __name__ = 'dish_recipe.recipe'
     name = fields.Char('Name', required=True, translate=True)
-    description = fields.Char('Brief Description', size=None)
+    description = fields.Text('Description', translate=True, size=None)
     preparation = fields.Text('Preparation')
     category = fields.Many2One('dish_recipe.category',
         'Category', required=True)
@@ -48,6 +49,9 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
         'get_percentage')
     product = fields.Many2One('product.product', 'Product associated',
         help='Product associated with this recipe.')
+    info_1 = fields.Char('Info 1')
+    info_2 = fields.Char('Info 2')
+    info_3 = fields.Char('Info 3')
     active = fields.Boolean('Active')
 
     @classmethod
@@ -60,6 +64,15 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
             table.drop_column('unit')
 
     @classmethod
+    def __setup__(cls):
+        super(Recipe, cls).__setup__()
+        cls._order = [
+            ('sequence', 'ASC'),
+            ('name', 'DESC'),
+            ('id', 'DESC'),
+            ]
+
+    @classmethod
     def multivalue_model(cls, field):
         pool = Pool()
         if field == 'price':
@@ -69,6 +82,48 @@ class Recipe(ModelSQL, ModelView, CompanyMultiValueMixin):
     @staticmethod
     def default_active():
         return True
+
+    def get_html_field_text(self, field, lang):
+        res = getattr(self, field)
+        res = res.replace('\n', '<br/>')
+        return res
+
+    def get_html_price(self, field, lang='en', company=1):
+        pool = Pool()
+        Lang = pool.get('ir.lang')
+        Price = pool.get('dish_recipe.price')
+
+        prices = Price.search([
+            ('company', '=', company),
+            ('recipe', '=', self.id),
+            ])
+        if prices:
+            res = prices[0].price
+        else:
+            res = Decimal('0.0')
+
+        lang, = Lang.search([
+                ('code', '=', lang),
+                ])
+        res = Lang.format(lang,
+            '%.2f',
+            res, True)
+        return res
+
+    def get_html_base64_image(self, image_name, code='image/jpeg'):
+        att_res = None
+        binary_data = None
+        for att in self.attachments:
+            if att.name == image_name:
+                binary_data = att.data
+                break
+        if binary_data is not None:
+            base64_encoded_data = base64.b64encode(binary_data)
+            res = code + ';base64, ' + base64_encoded_data.decode('utf-8')
+        else:
+            res = ''
+
+        return res
 
     def get_cost_components(self, name=None):
         result = Decimal('0.0')

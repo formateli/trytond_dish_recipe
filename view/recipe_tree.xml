@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <!-- This file is part of tryton-dish_recipe project for Tryton. The COPYRIGHT file at the top level of
 this repository contains the full copyright notices and license terms. -->
-<tree>
+<tree sequence="sequence">
     <field name="name"/>
     <field name="category"/>
     <field name="description"/>
+    <field name="sequence" tree_invisible="1"/>
 </tree>

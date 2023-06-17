@@ -31,5 +31,16 @@ this repository contains the full copyright notices and license terms. -->
             <label name="product"/>
             <field name="product"/>
         </page>
+        <page string="Other">
+            <label name="sequence"/>
+	    <field name="sequence"/>
+	    <newline/>
+	    <label name="info_1"/>
+	    <field name="info_1"/>
+	    <label name="info_2"/>
+            <field name="info_2"/>
+	    <label name="info_3"/>
+            <field name="info_3"/>
+        </page>
     </notebook>
 </form>

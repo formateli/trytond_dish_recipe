@@ -6,6 +6,9 @@ this repository contains the full copyright notices and license terms. -->
     <field name="name"/>
     <label name="parent"/>
     <field name="parent"/>
+    <label name="sequence"/>
+    <field name="sequence"/>
+    <newline/>
     <group colspan="4" col="-1" id="checkboxes">
         <!-- Add here some checkboxes ! -->
     </group>
@@ -15,6 +18,14 @@ this repository contains the full copyright notices and license terms. -->
         </page>
         <page name="recipes" col="1">
             <field name="recipes"/>
+        </page>
+	<page string="Info">
+	    <label name="info_1"/>
+	    <field name="info_1"/>
+	    <label name="info_2"/>
+            <field name="info_2"/>
+	    <label name="info_3"/>
+            <field name="info_3"/>
         </page>
     </notebook>
 </form>
