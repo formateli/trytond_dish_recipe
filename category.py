@@ -2,6 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 from trytond.model import ModelView, ModelSQL, fields, tree, sequence_ordered
 from trytond.pyson import Eval
+from . tools import tool_get_html_field_text
 
 
 class Category(tree(separator=' / '), sequence_ordered(), ModelSQL, ModelView):
@@ -28,3 +29,30 @@ class Category(tree(separator=' / '), sequence_ordered(), ModelSQL, ModelView):
             ('name', 'DESC'),
             ('id', 'DESC'),
             ]
+
+    def get_html_field_text(self, field, lang):
+        text = getattr(self, field)
+        res = tool_get_html_field_text(
+                'dish_recipe.category', field, self.id, text, lang)
+
+        #pool = Pool()
+        #Trans = pool.get('ir.translation')
+
+        #if lang in (None, ''):
+        #    res = getattr(self, field)
+        #    res = res.replace('\n', '<br/>')
+        #    return res
+
+        #vals = Trans.search([
+        #    ('type', '=', 'model'),
+        #    ('name', '=', 'dish_recipe.recipe,' + field),
+        #    ('res_id', '=', self.id),
+        #    ('lang', '=', lang)
+        #    ])
+        #if vals:
+        #    res = vals[0].value
+        #else:
+        #    res = getattr(self, field)
+        #res = res.replace('\n', '<br/>')
+        
+        return res

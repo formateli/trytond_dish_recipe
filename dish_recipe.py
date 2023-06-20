@@ -10,6 +10,7 @@ from trytond.modules.product import price_digits
 from trytond.modules.account.tax import _TaxKey
 from decimal import Decimal
 import base64
+from . tools import tool_get_html_field_text
 
 
 class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
@@ -84,25 +85,30 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
         return True
 
     def get_html_field_text(self, field, lang):
-        pool = Pool()
-        Trans = pool.get('ir.translation')
+        text = getattr(self, field)
+        res = tool_get_html_field_text(
+                'dish_recipe.recipe', field, self.id, text, lang)
 
-        if lang in (None, ''):
-            res = getattr(self, field)
-            res = res.replace('\n', '<br/>')
-            return res
+        #pool = Pool()
+        #Trans = pool.get('ir.translation')
 
-        vals = Trans.search([
-            ('type', '=', 'model'),
-            ('name', '=', 'dish_recipe.recipe,' + field),
-            ('res_id', '=', self.id),
-            ('lang', '=', lang)
-            ])
-        if vals:
-            res = vals[0].value
-        else:
-            res = getattr(self, field)
-        res = res.replace('\n', '<br/>')
+        #if lang in (None, ''):
+        #    res = getattr(self, field)
+        #    res = res.replace('\n', '<br/>')
+        #    return res
+
+        #vals = Trans.search([
+        #    ('type', '=', 'model'),
+        #    ('name', '=', 'dish_recipe.recipe,' + field),
+        #    ('res_id', '=', self.id),
+        #    ('lang', '=', lang)
+        #    ])
+        #if vals:
+        #    res = vals[0].value
+        #else:
+        #    res = getattr(self, field)
+        #res = res.replace('\n', '<br/>')
+        
         return res
 
     def get_html_price(self, field, lang='en', company=1):
