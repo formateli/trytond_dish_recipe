@@ -84,7 +84,24 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
         return True
 
     def get_html_field_text(self, field, lang):
-        res = getattr(self, field)
+        pool = Pool()
+        Trans = pool.get('ir.translation')
+
+        if lang in (None, ''):
+            res = getattr(self, field)
+            res = res.replace('\n', '<br/>')
+            return res
+
+        vals = Trans.search([
+            ('type', '=', 'model'),
+            ('name', '=', 'dish_recipe.recipe,' + field),
+            ('res_id', '=', self.id),
+            ('lang', '=', lang)
+            ])
+        if vals:
+            res = vals[0].value
+        else:
+            res = getattr(self, field)
         res = res.replace('\n', '<br/>')
         return res
 
@@ -97,9 +114,10 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
             ('company', '=', company),
             ('recipe', '=', self.id),
             ])
+        res = None
         if prices:
             res = prices[0].price
-        else:
+        if not res:
             res = Decimal('0.0')
 
         lang, = Lang.search([
