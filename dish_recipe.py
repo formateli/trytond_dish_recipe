@@ -10,7 +10,7 @@ from trytond.modules.product import price_digits
 from trytond.modules.account.tax import _TaxKey
 from decimal import Decimal
 import base64
-from . tools import tool_get_html_field_text
+from . tools import tool_get_html_field_text, tool_get_html_base64_image
 
 
 class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
@@ -87,28 +87,7 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
     def get_html_field_text(self, field, lang):
         text = getattr(self, field)
         res = tool_get_html_field_text(
-                'dish_recipe.recipe', field, self.id, text, lang)
-
-        #pool = Pool()
-        #Trans = pool.get('ir.translation')
-
-        #if lang in (None, ''):
-        #    res = getattr(self, field)
-        #    res = res.replace('\n', '<br/>')
-        #    return res
-
-        #vals = Trans.search([
-        #    ('type', '=', 'model'),
-        #    ('name', '=', 'dish_recipe.recipe,' + field),
-        #    ('res_id', '=', self.id),
-        #    ('lang', '=', lang)
-        #    ])
-        #if vals:
-        #    res = vals[0].value
-        #else:
-        #    res = getattr(self, field)
-        #res = res.replace('\n', '<br/>')
-        
+                'dish_recipe.recipe', field, self.id, text, lang)        
         return res
 
     def get_html_price(self, field, lang='en', company=1):
@@ -134,19 +113,26 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
             res, True)
         return res
 
-    def get_html_base64_image(self, image_name, code='image/jpeg'):
-        att_res = None
-        binary_data = None
-        for att in self.attachments:
-            if att.name == image_name:
-                binary_data = att.data
-                break
-        if binary_data is not None:
-            base64_encoded_data = base64.b64encode(binary_data)
-            res = code + ';base64, ' + base64_encoded_data.decode('utf-8')
-        else:
+    def get_html_base64_image(self, image_name, code='image/jpeg',
+            default_image=None):
+        pool = Pool()
+        res = None
+        if image_name:
+            if image_name.startswith("[["):
+                Recipe = pool.get('dish_recipe.recipe')
+                end = image_name.find(']].')
+                if end > -1:
+                    recipe_id = int(image_name[2:end])
+                    image_name = image_name[end+3:]
+                    res = tool_get_html_base64_image(Recipe(recipe_id),
+                            image_name, code)
+            else:
+                res = tool_get_html_base64_image(self,
+                        image_name, code)
+        if res is None and default_image is not None:
+            res = self.get_html_base64_image(default_image, code=code)
+        if res is None:
             res = ''
-
         return res
 
     def get_cost_components(self, name=None):
