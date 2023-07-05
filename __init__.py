@@ -11,6 +11,7 @@ def register():
         dish_recipe.Recipe,
         dish_recipe.SubRecipe,
         dish_recipe.RecipePrice,
+        dish_recipe.RecipePublish,
         dish_recipe.RecipeComponent,
         category.Category,
         product.Product,

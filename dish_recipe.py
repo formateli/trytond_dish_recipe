@@ -53,6 +53,9 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
     info_1 = fields.Char('Info 1')
     info_2 = fields.Char('Info 2')
     info_3 = fields.Char('Info 3')
+    publish = fields.MultiValue(fields.Boolean('Publish'))
+    publishes = fields.One2Many(
+        'dish_recipe.publish', 'recipe', 'Puplishes')
     active = fields.Boolean('Active')
 
     @classmethod
@@ -78,6 +81,8 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
         pool = Pool()
         if field == 'price':
             return pool.get('dish_recipe.price')
+        elif field == 'publish':
+            return pool.get('dish_recipe.publish')
         return super(Recipe, cls).multivalue_model(field)
 
     @staticmethod
@@ -133,6 +138,20 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
             res = self.get_html_base64_image(default_image, code=code)
         if res is None:
             res = ''
+        return res
+
+    def can_publish(self, company=1):
+        if not self.active:
+            return
+        pool = Pool()
+        Publish = pool.get('dish_recipe.publish')
+        publishes = Publish.search([
+            ('company', '=', company),
+            ('recipe', '=', self.id),
+            ])
+        res = None
+        if publishes:
+            res = publishes[0].publish
         return res
 
     def get_cost_components(self, name=None):
@@ -215,6 +234,14 @@ class RecipePrice(ModelSQL, CompanyValueMixin):
     recipe = fields.Many2One(
         'dish_recipe.recipe', 'Recipe', ondelete='CASCADE')
     price = fields.Numeric("Price", digits=price_digits)
+
+
+class RecipePublish(ModelSQL, CompanyValueMixin):
+    "Recipe Publish"
+    __name__ = 'dish_recipe.publish'
+    recipe = fields.Many2One(
+        'dish_recipe.recipe', 'Recipe', ondelete='CASCADE')
+    publish = fields.Boolean("Publish")
 
 
 class SubRecipe(ModelSQL, ModelView):
