@@ -22,10 +22,7 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
     category = fields.Many2One('dish_recipe.category',
         'Category', required=True)
     components = fields.One2Many('dish_recipe.recipe.component',
-        'recipe', 'Components',
-        domain=[
-            ('product', '!=', Eval('product')),
-        ], depends=['product'])
+        'recipe', 'Component')
     subrecipes = fields.One2Many('dish_recipe.recipe.subrecipe',
         'recipe', 'Sub Recipe',
         domain=[
@@ -35,10 +32,19 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
     cost_components = fields.Function(fields.Numeric('Cost',
             digits=price_digits),
         'get_cost_components')
+    cost_last_components = fields.Function(fields.Numeric('Last Cost',
+            digits=price_digits),
+        'get_cost_components')
     cost_subrecipes = fields.Function(fields.Numeric('Cost',
             digits=price_digits),
         'get_cost_subrecipes')
+    cost_last_subrecipes = fields.Function(fields.Numeric('Last Cost',
+            digits=price_digits),
+        'get_cost_subrecipes')
     cost = fields.Function(fields.Numeric('Cost',
+            digits=price_digits),
+        'get_cost')
+    cost_last = fields.Function(fields.Numeric('Last Cost',
             digits=price_digits),
         'get_cost')
     price = fields.MultiValue(fields.Numeric('Price',
@@ -46,6 +52,9 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
     prices = fields.One2Many(
         'dish_recipe.price', 'recipe', 'Prices')
     percentage = fields.Function(fields.Numeric('Percentage',
+            digits=price_digits),
+        'get_percentage')
+    percentage_last = fields.Function(fields.Numeric('Percentage',
             digits=price_digits),
         'get_percentage')
     product = fields.Many2One('product.product', 'Product associated',
@@ -155,38 +164,60 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
         return res
 
     def get_cost_components(self, name=None):
-        result = Decimal('0.0')
-        for component in self.components:
-            if component.total_cost:
-                result += component.total_cost
-        exp = Decimal(str(10.0 ** -price_digits[1]))
-        return result.quantize(exp)
+        if name == 'cost_components':
+            field = 'total_cost'
+        elif name == 'cost_last_components':
+            field = 'total_cost_last'
+        return self.get_total_sub_cost('components', field)
 
     def get_cost_subrecipes(self, name=None):
+        if name == 'cost_subrecipes':
+            field = 'total_cost'
+        elif name == 'cost_last_subrecipes':
+            field = 'total_cost_last'
+        return self.get_total_sub_cost('subrecipes', field)
+
+    def get_total_sub_cost(self, main, field):
         result = Decimal('0.0')
-        for recipe in self.subrecipes:
-            if recipe.total_cost:
-                result += recipe.total_cost
+        for el in getattr(self, main):
+            if getattr(el, field):
+                result += getattr(el, field)
         exp = Decimal(str(10.0 ** -price_digits[1]))
         return result.quantize(exp)
 
     def get_cost(self, name=None):
-        return self.cost_components + self.cost_subrecipes
+        if name == 'cost':
+            return self.cost_components + self.cost_subrecipes
+        elif name == 'cost_last':
+            return self.cost_last_components + self.cost_last_subrecipes
 
     def get_percentage(self, name=None):
-        if self.price is None or self.cost is None:
+        if name == 'percentage':
+            field = 'cost'
+        elif name == 'percentage_last':
+            field = 'cost_last'
+        if self.price is None or getattr(self, field) is None:
             return
-        result = self.cost / self.price * Decimal('100.0')
+        result = getattr(self, field) / self.price * Decimal('100.0')
         exp = Decimal(str(10.0 ** -price_digits[1]))
         return result.quantize(exp)
 
-    @fields.depends('cost', 'percentage',
-        'components', 'subrecipes', 'price')
+    @fields.depends('cost', 'cost_last', 'percentage',
+            'percentage_last', 'components', 'subrecipes',
+            'price')
     def on_change_price(self):
-        self.cost_components = self.get_cost_components()
-        self.cost_subrecipes = self.get_cost_subrecipes()
-        self.cost = self.get_cost()
-        self.percentage = self.get_percentage()
+        self.cost_components = self.get_cost_components(
+                name='cost_components')
+        self.cost_last_components = self.get_cost_components(
+                name='cost_last_components')
+        self.cost_subrecipes = self.get_cost_subrecipes(
+                name='cost_subrecipes')
+        self.cost_last_subrecipes = self.get_cost_subrecipes(
+                name='cost_last_subrecipes')
+        self.cost = self.get_cost(name='cost')
+        self.cost_last = self.get_cost(name='cost_last')
+        self.percentage = self.get_percentage(name='percentage')
+        self.percentage_last = self.get_percentage(name='percentage_last')
 
     @fields.depends(methods=['on_change_price'])
     def on_change_components(self):
@@ -264,7 +295,13 @@ class SubRecipe(ModelSQL, ModelView):
     cost = fields.Function(fields.Numeric('Cost',
             digits=price_digits),
         'get_cost')
-    total_cost = fields.Function(fields.Numeric('Total',
+    cost_last = fields.Function(fields.Numeric('Last Cost',
+            digits=price_digits),
+        'get_cost')
+    total_cost = fields.Function(fields.Numeric('Total Cost',
+            digits=price_digits),
+        'get_total_cost')
+    total_cost_last = fields.Function(fields.Numeric('Total Last Cost',
             digits=price_digits),
         'get_total_cost')
 
@@ -274,17 +311,23 @@ class SubRecipe(ModelSQL, ModelView):
     def get_cost(self, name=None):
         if not self.subrecipe:
             return Decimal('0.0')
-        return self.subrecipe.cost
+        return getattr(self, name)
 
     def get_total_cost(self, name=None):
         if not self.quantity:
             return Decimal('0.0')
-        return self.cost * Decimal(self.quantity)
+        if name == 'total_cost':
+            field = 'cost'
+        else:
+            field = 'cost_last'
+        return getattr(self, field) * Decimal(self.quantity)
 
     @fields.depends('quantity', 'subrecipe')
     def on_change_subrecipe(self):
-        self.cost = self.get_cost()
-        self.total_cost = self.get_total_cost()
+        self.cost = self.get_cost(name='cost')
+        self.cost_last = self.get_cost(name='cost_last')
+        self.total_cost = self.get_total_cost(name='total_cost')
+        self.total_cost_last = self.get_total_cost(name='total_cost_last')
 
     @fields.depends(methods=['on_change_subrecipe'])
     def on_change_quantity(self):
@@ -300,11 +343,7 @@ class RecipeComponent(ModelSQL, ModelView):
     unit_digits = fields.Function(fields.Integer('Unit Digits'),
         'on_change_with_unit_digits')
     product = fields.Many2One('product.product', 'Product', required=True,
-        domain=[
-            ('id', '!=', Eval(
-                '_parent_recipe', {}).get(
-                'product', -1))
-        ])
+        domain=[('id', '!=', -1)])
     quantity = fields.Float('Quantity', required=True,
         digits=(16, Eval('unit_digits', 2)),
         depends=['unit_digits'])
@@ -323,9 +362,15 @@ class RecipeComponent(ModelSQL, ModelView):
     cost = fields.Function(fields.Numeric('Cost',
             digits=price_digits),
         'on_change_with_cost')
-    total_cost = fields.Function(fields.Numeric('Total',
+    cost_last = fields.Function(fields.Numeric('Last Cost',
+            digits=price_digits),
+        'on_change_with_cost_last')
+    total_cost = fields.Function(fields.Numeric('Total Cost',
             digits=price_digits),
         'on_change_with_total_cost')
+    total_cost_last = fields.Function(fields.Numeric('Total Last Cost',
+            digits=price_digits),
+        'on_change_with_total_cost_last')
 
     @fields.depends('unit')
     def on_change_with_unit_digits(self, name=None):
@@ -340,32 +385,86 @@ class RecipeComponent(ModelSQL, ModelView):
 
     @fields.depends('product', 'unit', 'taxes')
     def on_change_with_cost(self, name=None):
-        return self._calculate_cost(self.product, self.unit, self.taxes)
+        return self._calculate_cost(
+                name, self.product, self.unit, self.taxes)
 
-    @fields.depends('quantity', 'cost', 'waste', 'taxes')
+    @fields.depends('product', 'unit', 'taxes')
+    def on_change_with_cost_last(self, name=None):
+        return self._calculate_cost(
+                name, self.product, self.unit, self.taxes)
+
+    @fields.depends('quantity', 'cost', 'waste',
+            'taxes', 'unit')
     def on_change_with_total_cost(self, name=None):
-        if not self.quantity:
+        return self._get_total_cost(
+                'cost', self.quantity, self.waste)
+
+    @fields.depends('quantity', 'cost_last', 'waste',
+            'taxes', 'unit')
+    def on_change_with_total_cost_last(self, name=None):
+        return self._get_total_cost(
+                'cost_last', self.quantity, self.waste)
+
+    def _get_total_cost(self, name, quantity, waste):
+        if not quantity:
             return Decimal('0.0')
-        total = self.cost * Decimal(self.quantity)
-        if self.waste and (self.waste > 0 and self.waste < 100):
-            waste = total * Decimal((self.waste / 100))
-            total += waste
+        total = getattr(self, name) * Decimal(quantity)
+        if self.waste and (waste > 0 and waste < 100):
+            waste_t = total * Decimal((waste / 100))
+            total += waste_t
         return total
 
-    def _calculate_cost(self, product, unit, include_tax):
+    def _calculate_cost(self, name, product, unit, include_tax):
         if not product or not unit:
             return Decimal('0.0')
         Uom = Pool().get('product.uom')
-        cost = Uom.compute_price(
-            product.default_uom,
-            product.cost_price,
-            unit)
+        cost = None
+        if name == 'cost':
+            cost = Uom.compute_price(
+                product.default_uom,
+                product.cost_price,
+                unit)
+        elif name == 'cost_last':
+            l_cost, l_unit = self._get_last_cost(product)
+            if l_unit is not None:
+                cost = Uom.compute_price(
+                    l_unit,
+                    l_cost,
+                    unit)
 
+        if cost is None:
+            return Decimal('0.0')
         res = cost
         if include_tax:
             tax_amount = self._compute_taxes(product, cost)
             res = cost + tax_amount
         return res
+
+    def _get_last_cost(self, product,
+            date=None, company=None):
+        if not product:
+            return Decimal('0.0')
+        pool = Pool()
+        Line = pool.get('account.invoice.line')
+
+        if company is None:
+            company = Transaction().context.get('company')
+        domain = [
+                ('invoice.company', '=', company),
+                ('invoice.state', 'in', ['posted', 'paid']),
+                ('type', '=', 'line'),
+                ('product', '=', product.id),
+                ('unit_price', '>', 0),
+            ]
+        if date:
+            domain.append(('invoice.invoice_date', '<=', date))
+
+        lines = Line.search(domain,
+            order=[('invoice.invoice_date', 'DESC'), ('id', 'DESC')],
+            limit=1)
+        if lines:
+            return lines[0].unit_price, lines[0].unit
+        return None, None
 
     def _compute_taxes(self, product, cost):
         pool = Pool()
