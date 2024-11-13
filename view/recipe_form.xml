@@ -22,22 +22,22 @@ this repository contains the full copyright notices and license terms. -->
             <field name="attachments"
                 view_ids="dish_recipe.attachment_view_tree" colspan="4"/>
         </page>
-	<page string="Price / Costs">
+	<page id="costs" string="Price / Costs">
             <label name="price"/>
 	    <field name="price"/>
 	    <newline/>
-	    <separator string="Average Cost" colspan="4"/>
+	    <separator id="average_cost" string="Average Cost" colspan="4"/>
 	    <label name="cost"/>
 	    <field name="cost"/>
 	    <label name="percentage"/>
 	    <field name="percentage"/>
-	    <separator string="Last Cost" colspan="4"/>
+	    <separator id="last_cost" string="Last Cost" colspan="4"/>
 	    <label name="cost_last"/>
 	    <field name="cost_last"/>
 	    <label name="percentage_last"/>
 	    <field name="percentage_last"/>
         </page>
-        <page string="Other">
+        <page id="other" string="Other">
             <label name="sequence"/>
 	    <field name="sequence"/>
             <label name="publish"/>

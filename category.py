@@ -11,7 +11,7 @@ class Category(tree(separator=' / '), sequence_ordered(), ModelSQL, ModelView):
     name = fields.Char('Name', required=True, translate=True)
     parent = fields.Many2One('dish_recipe.category', 'Parent',
         domain=[
-            ('id', '!=', Eval('id')),
+            ('id', '!=', Eval('id', None)),
         ], depends=['id'])
     childs = fields.One2Many('dish_recipe.category', 'parent',
             string='Children')

@@ -19,7 +19,7 @@ this repository contains the full copyright notices and license terms. -->
         <page name="recipes" col="1">
             <field name="recipes"/>
         </page>
-	<page string="Info">
+	<page id="info" string="Info">
 	    <label name="info_1"/>
 	    <field name="info_1"/>
 	    <label name="info_2"/>

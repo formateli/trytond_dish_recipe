@@ -46,37 +46,37 @@ class DishRecipeTestCase(ModuleTestCase):
         self._add_component(recipe, product_2, 600)
 
         self._check_nums(recipe, Decimal('0.0'), None, None)
-
+        
         with set_company(company_a):
             # Change cost (probably with a purchase)
             self._update_product_cost(product_1_id, Decimal('1000.0'))
-
+        
         with set_company(company_b):
             # Change cost (probably with a purchase)
             self._update_product_cost(product_1_id, Decimal('2000.0'))
-
+        
         with set_company(company_a):
             recipe = Recipe(recipe_id)
             self._check_nums(recipe, Decimal('250.0'), None, None)
             recipe.price = Decimal('500.0')
             recipe.save()
-
+        
         with set_company(company_b):
             recipe = Recipe(recipe_id)
             self._check_nums(recipe, Decimal('500.0'), None, None)
             recipe.price = Decimal('800.0')
             recipe.save()
-
+        
         with set_company(company_a):
             recipe = Recipe(recipe_id)
             self._check_nums(recipe,
                 Decimal('250.0'), Decimal('500.0'), Decimal('50.0'))
-
+        
         with set_company(company_b):
             recipe = Recipe(recipe_id)
             self._check_nums(recipe,
                 Decimal('500.0'), Decimal('800.0'), Decimal('62.5'))
-
+        
         # Sub recipes
         recipe_2 = Recipe(
             name='Recipe 2',
@@ -86,14 +86,14 @@ class DishRecipeTestCase(ModuleTestCase):
         recipe_2_id = recipe_2.id
         self._check_nums(recipe_2, Decimal('0.0'), None, None)
         self._add_subrecipe(recipe_2, recipe, 2)
-
+        
         with set_company(company_a):
             recipe_2 = Recipe(recipe_2_id)
             recipe_2.price = Decimal('1000.0')
             recipe_2.save()
             self._check_nums(recipe_2,
                 Decimal('500.0'), Decimal('1000.0'), Decimal('50.0'))
-
+        
         with set_company(company_b):
             recipe_2 = Recipe(recipe_2_id)
             recipe_2.price = Decimal('2500.0')
@@ -165,9 +165,4 @@ class DishRecipeTestCase(ModuleTestCase):
         uom = Uom.search([('name', '=', name)])[0]
         return uom
 
-
-def suite():
-    suite = trytond.tests.test_tryton.suite()
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
-        DishRecipeTestCase))
-    return suite
+del ModuleTestCase

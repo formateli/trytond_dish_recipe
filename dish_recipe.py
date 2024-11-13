@@ -26,7 +26,7 @@ class Recipe(ModelSQL, ModelView, sequence_ordered(), CompanyMultiValueMixin):
     subrecipes = fields.One2Many('dish_recipe.recipe.subrecipe',
         'recipe', 'Sub Recipe',
         domain=[
-            ('id', '!=', Eval('id')),
+            ('id', '!=', Eval('id', -1)),
         ], depends=['id'])
     attachments = fields.One2Many('ir.attachment', 'resource', 'Attachments')
     cost_components = fields.Function(fields.Numeric('Cost',
@@ -311,7 +311,7 @@ class SubRecipe(ModelSQL, ModelView):
     def get_cost(self, name=None):
         if not self.subrecipe:
             return Decimal('0.0')
-        return getattr(self, name)
+        return getattr(self.subrecipe, name)
 
     def get_total_cost(self, name=None):
         if not self.quantity:
@@ -479,13 +479,10 @@ class RecipeComponent(ModelSQL, ModelView):
         if company_id is not None:
             currency = Company(company_id).currency
 
-        print(product.name)
-
         for tax in product.supplier_taxes_used:
             tax_ids.append(tax.id)
 
         l_taxes = Tax.compute(Tax.browse(tax_ids), cost, 1, None)
-        #print(l_taxes)
 
         for tax in l_taxes:
             taxline = self._compute_tax_line(**tax)
