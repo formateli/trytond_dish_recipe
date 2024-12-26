@@ -60,14 +60,14 @@ this repository contains the full copyright notices and license terms. -->
             action="act_category_list"/>
 
         <record model="ir.model.access" id="access_dish_recipe_category">
-            <field name="model" search="[('model', '=', 'dish_recipe.category')]"/>
+	    <field name="model">dish_recipe.category</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
             <field name="perm_delete" eval="False"/>
         </record>
         <record model="ir.model.access" id="access_dish_recipe_category_admin">
-            <field name="model" search="[('model', '=', 'dish_recipe.category')]"/>
+	    <field name="model">dish_recipe.category</field>
             <field name="group" ref="group_dish_recipe_admin"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
