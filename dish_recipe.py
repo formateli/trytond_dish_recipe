@@ -7,7 +7,7 @@ from trytond.pyson import Bool, Eval, If
 from trytond.modules.company.model import (
     CompanyMultiValueMixin, CompanyValueMixin)
 from trytond.modules.product import price_digits
-from trytond.modules.account.tax import _TaxKey
+from trytond.modules.account.tax import _TaxLine
 from decimal import Decimal
 import base64
 from . tools import tool_get_html_field_text, tool_get_html_base64_image
@@ -509,16 +509,12 @@ class RecipeComponent(ModelSQL, ModelView):
         else:
             type_ = 'credit_note'
 
-        line = {}
-        line['manual'] = False
-        line['description'] = tax.description
-        line['legal_notice'] = tax.legal_notice
-        line['base'] = base
-        line['amount'] = amount
-        line['tax'] = tax.id
-        line['account'] = getattr(tax, '%s_account' % type_).id
-
-        return _TaxKey(**line)
+        return _TaxLine(
+            base=base,
+            amount=amount,
+            tax=tax,
+            account=getattr(tax, '%s_account' % type_),
+            )
 
     @staticmethod
     def _round_taxes(taxes, currency):
